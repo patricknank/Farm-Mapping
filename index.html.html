@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrick Nankivell · QGIS Mapping · Heritage · Small Areas · Paddock Trees</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Instrument+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PRICE UPDATE SECTION — EDIT THESE VALUES FORTNIGHTLY
+   Source: Argus Media (fertiliser), AWEX (wool), MLA (livestock), ABARES (grains)
+   ============================================================ */
+:root {
+  /* --- Fertiliser (Argus) --- */
+  --urea-price:       "A$880–1,000/t";
+  --urea-loc:         "fca Geelong";
+  --dap-price:        "A$1,215/t";
+  --mkp-price:        "A$515/t";
+  --ss-price:         "A$440–480/t";
+  --fert-date:        "13 Mar 2026";
+  /* --- Wool (AWEX) --- */
+  --emi-price:        "1,182¢/kg";
+  --m18-price:        "1,810¢/kg";
+  --m21-price:        "1,420¢/kg";
+  --wool-date:        "Mar 2026";
+  /* --- Livestock (MLA) --- */
+  --eyci-price:       "612¢/kg cwt";
+  --lamb-price:       "820¢/kg cwt";
+  --steer-price:      "580¢/kg cwt";
+  --live-date:        "Mar 2026";
+  /* --- Grains (ABARES) --- */
+  --wheat-price:      "A$318/t";
+  --canola-price:     "A$698/t";
+  --barley-price:     "A$268/t";
+  --grain-date:       "Mar 2026";
+  /* --- Supply transit (Kpler) --- */
+  --urea-transit:     "229,000t";
+  --mapdap-transit:   "408,000t";
+  --coverage:         "~6 weeks";
+  /* ============================================================ */
+
+  --ink:#0e1a12; --ink2:#2a3d2f;
+  --sage:#2d6a4f; --sage2:#40916c; --sage3:#74c69d; --sage-pale:#f0f7f3;
+  --amber:#c77d0a; --amber2:#f4a926; --amber-pale:#fef8ec;
+  --red:#b83225; --red-pale:#fdf0ef;
+  --sand:#f7f3ed; --white:#fff;
+  --border:#d4e4d8;
+  --mono:'DM Mono',monospace;
+  --serif:'Playfair Display',Georgia,serif;
+  --sans:'Instrument Sans',sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);background:var(--sand);color:var(--ink);font-size:14px;line-height:1.6}
+
+/* NAV */
+nav{background:var(--ink);display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo-mark{width:34px;height:34px;border:1.5px solid var(--amber2);border-radius:6px;display:grid;place-items:center}
+.logo-mark svg{width:20px;height:20px}
+.logo-name{font-family:var(--serif);font-size:16px;color:#fff;line-height:1}
+.logo-sub{font-family:var(--mono);font-size:9px;color:var(--amber2);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.nav-links{display:flex;list-style:none}
+.nav-links a{color:rgba(255,255,255,.5);text-decoration:none;font-size:12.5px;padding:0 14px;height:64px;display:flex;align-items:center;border-bottom:2px solid transparent;transition:all .2s;cursor:pointer}
+.nav-links a:hover,.nav-links a.active{color:#fff;border-bottom-color:var(--amber2)}
+.nav-cta{background:var(--amber);color:#fff;border:none;padding:9px 20px;border-radius:4px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:var(--sans)}
+.page{display:none}.page.active{display:block}
+
+/* HERO */
+.hero{background:var(--ink);display:grid;grid-template-columns:55% 45%;min-height:500px;overflow:hidden}
+.hero-left{padding:68px 48px 68px 56px;display:flex;flex-direction:column;justify-content:center}
+.eyebrow{font-family:var(--mono);font-size:10px;color:var(--amber2);letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.eyebrow::before{content:'';width:24px;height:1px;background:var(--amber2)}
+.hero h1{font-family:var(--serif);font-size:46px;line-height:1.08;color:#fff;margin-bottom:12px;letter-spacing:-.5px}
+.hero h1 em{color:var(--amber2);font-style:italic}
+.hero-name{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.hero-desc{color:rgba(255,255,255,.58);font-size:14.5px;line-height:1.78;max-width:400px;margin-bottom:30px}
+.hero-btns{display:flex;gap:12px;margin-bottom:44px}
+.btn-p{background:var(--amber);color:#fff;border:none;padding:12px 26px;border-radius:4px;font-weight:500;font-size:14px;cursor:pointer;font-family:var(--sans)}
+.btn-p:hover{background:var(--amber2)}
+.btn-o{background:transparent;color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);padding:11px 22px;border-radius:4px;font-size:14px;cursor:pointer;font-family:var(--sans)}
+.btn-o:hover{border-color:rgba(255,255,255,.5);color:#fff}
+.hero-stats{display:flex;gap:32px;padding-top:28px;border-top:1px solid rgba(255,255,255,.1)}
+.stat .n{font-family:var(--serif);font-size:30px;color:#fff}
+.stat .l{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;margin-top:2px}
+.hero-right{background:#091410;overflow:hidden}
+.hero-right svg{width:100%;height:100%}
+
+/* SERVICE STRIP */
+.strip{background:#fff;border-bottom:1px solid var(--border);padding:0 56px;display:flex;overflow-x:auto}
+.strip-item{padding:16px 20px;border-right:1px solid var(--border);white-space:nowrap;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:7px;flex-shrink:0}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--sage3);flex-shrink:0}
+
+/* SECTIONS */
+section{padding:64px 56px}
+.sec-tag{font-family:var(--mono);font-size:10px;color:var(--sage);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+.sec-tag-a{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+h2.sec-title{font-family:var(--serif);font-size:34px;line-height:1.15;color:var(--ink);margin-bottom:8px}
+.sec-lead{color:#5a6e5e;font-size:14.5px;line-height:1.72;max-width:520px;margin-bottom:44px}
+
+/* ABOUT */
+.about{background:var(--ink);padding:56px}
+.about-inner{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.about-left p{color:rgba(255,255,255,.6);font-size:14px;line-height:1.78;margin-bottom:12px}
+.about-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.chip{font-family:var(--mono);font-size:10px;color:var(--sage3);background:rgba(116,198,157,.1);border:1px solid rgba(116,198,157,.18);padding:5px 12px;border-radius:3px;letter-spacing:.5px}
+.about-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.about-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:20px}
+.about-card .n{font-family:var(--serif);font-size:30px;color:#fff;margin-bottom:4px}
+.about-card .l{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase}
+.about-card .d{font-size:12px;color:rgba(255,255,255,.42);margin-top:6px;line-height:1.55}
+
+/* ===== SMALL AREAS & PADDOCK TREES FEATURE SECTION ===== */
+.clearings{background:var(--sand);padding:0}
+.clearings-hero{background:var(--ink2);padding:64px 56px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.clearings-hero-text .eyebrow{color:var(--amber2);margin-bottom:14px}
+.clearings-hero-text h2{font-family:var(--serif);font-size:38px;color:#fff;line-height:1.12;margin-bottom:16px}
+.clearings-hero-text p{color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.78;margin-bottom:14px}
+.clearings-hero-map{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.1);height:360px;background:#0a1510;position:relative}
+.clearings-hero-map svg{width:100%;height:100%}
+.map-pill{position:absolute;top:12px;left:12px;background:rgba(10,21,16,.85);color:var(--sage3);font-family:var(--mono);font-size:9px;letter-spacing:1.5px;padding:5px 12px;border-radius:3px;text-transform:uppercase}
+.clearings-detail{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-top:1px solid var(--border)}
+.clearing-type{padding:40px 36px;border-right:1px solid var(--border);background:#fff}
+.clearing-type:last-child{border-right:none}
+.clearing-type-icon{width:44px;height:44px;border-radius:8px;display:grid;place-items:center;margin-bottom:18px}
+.clearing-type-icon svg{width:22px;height:22px}
+.clearing-type h3{font-family:var(--serif);font-size:20px;color:var(--ink);margin-bottom:10px}
+.clearing-type p{font-size:13px;color:#5a6e5e;line-height:1.68;margin-bottom:16px}
+.clearing-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.clearing-steps li{font-size:12.5px;color:var(--ink2);display:flex;align-items:flex-start;gap:8px;line-height:1.55}
+.clearing-steps li::before{content:'→';color:var(--sage2);font-weight:700;flex-shrink:0;margin-top:1px}
+.clearing-nsw{background:var(--amber-pale);border-top:1px solid rgba(199,125,10,.15);padding:32px 56px;display:flex;align-items:center;gap:24px}
+.clearing-nsw-badge{background:var(--amber);color:#fff;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;padding:6px 14px;border-radius:3px;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.clearing-nsw p{font-size:13.5px;color:#5a4a20;line-height:1.65}
+
+/* SERVICES GRID */
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.svc-card{border:1px solid var(--border);border-radius:8px;padding:26px 22px;background:#fff;position:relative;overflow:hidden}
+.svc-card:hover{box-shadow:0 6px 20px rgba(14,26,18,.08)}
+.svc-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.svc-green::after{background:var(--sage2)}
+.svc-amber::after{background:var(--amber)}
+.svc-teal::after{background:#1abc9c}
+.svc-icon{width:38px;height:38px;background:var(--sage-pale);border-radius:6px;display:grid;place-items:center;margin-bottom:16px}
+.svc-icon svg{width:20px;height:20px}
+.svc-card h3{font-family:var(--serif);font-size:18px;color:var(--ink);margin-bottom:8px}
+.svc-card p{font-size:12.5px;color:#5a6e5e;line-height:1.65;margin-bottom:12px}
+.svc-badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:3px 9px;border-radius:3px;letter-spacing:.5px;text-transform:uppercase}
+.badge-expand{color:var(--amber);background:var(--amber-pale);border:1px solid rgba(199,125,10,.2)}
+.badge-partner{color:var(--sage);background:var(--sage-pale);border:1px solid var(--border)}
+.badge-core{color:#fff;background:var(--sage);border:1px solid var(--sage)}
+
+/* PORTFOLIO */
+.port-disclaimer{background:#fff;border:1px solid var(--border);border-left:3px solid var(--sage2);border-radius:6px;padding:14px 18px;margin-bottom:32px;font-size:13px;color:#5a6e5e;line-height:1.6}
+.port-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.port-card{background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.port-card:hover{box-shadow:0 6px 20px rgba(14,26,18,.09);transform:translateY(-2px)}
+.port-thumb{height:120px;position:relative;background:var(--ink)}
+.port-thumb svg{width:100%;height:100%}
+.port-sector{position:absolute;top:10px;left:10px;font-family:var(--mono);font-size:9px;letter-spacing:1.2px;color:#fff;background:rgba(45,106,79,.88);padding:4px 10px;border-radius:2px;text-transform:uppercase}
+.port-body{padding:16px}
+.port-body h3{font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:5px;line-height:1.3}
+.port-body p{font-size:12px;color:#5a6e5e;line-height:1.6}
+.port-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.port-tag{font-family:var(--mono);font-size:9px;color:var(--sage);background:var(--sage-pale);border:1px solid var(--border);padding:3px 8px;border-radius:2px}
+
+/* PARTNER */
+.partner{background:var(--amber-pale);border-top:1px solid rgba(199,125,10,.15);padding:56px}
+.partner-inner{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.partner-left h2{font-family:var(--serif);font-size:32px;color:var(--ink);margin-bottom:14px;line-height:1.2}
+.partner-left p{font-size:14px;color:#5a4a20;line-height:1.78;margin-bottom:12px}
+.partner-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.partner-chip{font-family:var(--mono);font-size:10px;color:var(--amber);background:rgba(199,125,10,.08);border:1px solid rgba(199,125,10,.2);padding:5px 12px;border-radius:3px}
+.partner-right{background:#fff;border:1px solid rgba(199,125,10,.2);border-radius:10px;padding:26px}
+.partner-right h4{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.partner-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--ink2);line-height:1.55}
+.partner-row:last-child{border-bottom:none}
+.partner-row::before{content:'✓';color:var(--sage2);font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* AG MARKET */
+.agmarket{background:var(--ink);padding:64px 56px}
+.alert-bar{background:rgba(184,50,37,.14);border:1px solid rgba(184,50,37,.3);border-radius:6px;padding:14px 18px;margin-bottom:24px}
+.alert-bar p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.6}
+.alert-bar p strong{color:#fff}
+.price-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:18px}
+.price-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:18px}
+.price-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.pct{font-family:var(--mono);font-size:10px;color:var(--sage3);letter-spacing:1.5px;text-transform:uppercase}
+.pcd{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28)}
+.price-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.price-row:last-child{border-bottom:none}
+.pname{font-size:12.5px;color:rgba(255,255,255,.75)}
+.pname small{display:block;font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);margin-top:1px}
+.pval{font-family:var(--mono);font-size:13px;color:#fff}
+.pchg{font-family:var(--mono);font-size:10px}
+.crit{color:#e74c3c}.up{color:#f4a926}.ok{color:#74c69d}
+.supply-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.supply-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:14px;text-align:center}
+.supply-item .sn{font-family:var(--serif);font-size:26px;color:#fff}
+.supply-item .su{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.supply-item .sd{font-size:11px;color:rgba(255,255,255,.38);margin-top:4px}
+
+/* PROCESS */
+.process{background:#fff;border-top:1px solid var(--border)}
+.proc-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;margin-top:44px}
+.proc-steps::before{content:'';position:absolute;top:19px;left:calc(12.5%+9px);right:calc(12.5%+9px);height:1px;background:var(--border)}
+.proc-step{text-align:center}
+.proc-num{width:38px;height:38px;border-radius:50%;background:var(--sage);color:#fff;font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;position:relative;z-index:1}
+.proc-step h4{font-family:var(--serif);font-size:16px;color:var(--ink);margin-bottom:7px}
+.proc-step p{font-size:12px;color:#5a6e5e;line-height:1.6}
+
+/* CTA */
+.cta{background:var(--sage);padding:64px 56px;text-align:center}
+.cta h2{font-family:var(--serif);font-size:38px;color:#fff;margin-bottom:10px}
+.cta p{color:rgba(255,255,255,.62);font-size:14.5px;margin-bottom:32px;max-width:420px;margin-left:auto;margin-right:auto}
+.cta-form{display:flex;gap:10px;max-width:400px;margin:0 auto}
+.cta-form input{flex:1;padding:12px 14px;border-radius:4px;border:none;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-family:var(--sans);outline:none}
+.cta-form input::placeholder{color:rgba(255,255,255,.38)}
+.cta-form button{background:var(--amber);color:#fff;border:none;padding:12px 20px;border-radius:4px;font-weight:500;cursor:pointer;font-family:var(--sans);white-space:nowrap}
+
+footer{background:var(--ink);padding:28px 56px;display:flex;align-items:center;justify-content:space-between}
+.foot-copy{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.28)}
+.foot-links{display:flex;gap:20px}
+.foot-links a{font-size:12px;color:rgba(255,255,255,.38);text-decoration:none;cursor:pointer}
+.foot-links a:hover{color:rgba(255,255,255,.7)}
+
+/* CONTACT PAGE */
+.contact-hero{background:var(--sage);padding:64px 56px;text-align:center}
+.contact-hero h1{font-family:var(--serif);font-size:42px;color:#fff;margin-bottom:12px}
+.contact-hero p{color:rgba(255,255,255,.62);font-size:15px;max-width:480px;margin:0 auto}
+.contact-body{padding:56px;background:var(--sand)}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:900px;margin:0 auto}
+.form-label{font-family:var(--mono);font-size:10px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:6px}
+.form-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:4px;font-size:14px;font-family:var(--sans);background:#fff;outline:none;color:var(--ink)}
+.form-input:focus{border-color:var(--sage)}
+.info-card{background:#fff;border:1px solid var(--border);border-radius:6px;padding:16px 18px;margin-bottom:14px}
+.info-card-tag{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.info-card p{font-size:13px;color:#5a6e5e;line-height:1.6}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-mark">
+      <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="#f4a926" stroke-width="1.2"/><circle cx="10" cy="10" r="7.5" stroke="#f4a926" stroke-width=".8" stroke-dasharray="2 1.5"/><line x1="10" y1="2" x2="10" y2="18" stroke="#f4a926" stroke-width=".8"/><line x1="2" y1="10" x2="18" y2="10" stroke="#f4a926" stroke-width=".8"/></svg>
+    </div>
+    <div><div class="logo-name">Patrick Nankivell</div><div class="logo-sub">QGIS · Heritage · Clearing</div></div>
+  </div>
+  <ul class="nav-links">
+    <li><a id="nav-home" class="active" onclick="showPage('home')">Home</a></li>
+    <li><a id="nav-clearings" onclick="showPage('clearings')">Small Areas & Paddock Trees</a></li>
+    <li><a id="nav-services" onclick="showPage('services')">Services</a></li>
+    <li><a id="nav-portfolio" onclick="showPage('portfolio')">Portfolio</a></li>
+    <li><a id="nav-agprices" onclick="showPage('agprices')">Ag Prices</a></li>
+    <li><a id="nav-contact" onclick="showPage('contact')">Contact</a></li>
+  </ul>
+  <button class="nav-cta" onclick="showPage('contact')">Get in touch</button>
+</nav>
+
+<!-- ========================================================
+     HOME PAGE
+     ======================================================== -->
+<div id="page-home" class="page active">
+
+  <div class="hero">
+    <div class="hero-left">
+      <div class="eyebrow">QGIS Specialist · NSW</div>
+      <h1>Mapping <em>country.</em><br>Heritage. Trees.<br>Small areas.</h1>
+      <div class="hero-name">Patrick Nankivell</div>
+      <p class="hero-desc">Independent QGIS consultant specialising in Aboriginal cultural heritage mapping, tree survey, small area clearing assessments, and paddock tree mapping across NSW.</p>
+      <div class="hero-btns">
+        <button class="btn-p" onclick="showPage('contact')">Start a project</button>
+        <button class="btn-o" onclick="showPage('clearings')">Small areas & paddock trees ↗</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><div class="n">15+</div><div class="l">Projects completed</div></div>
+        <div class="stat"><div class="n">NSW</div><div class="l">Primary region</div></div>
+        <div class="stat"><div class="n">100%</div><div class="l">Confidential</div></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <svg viewBox="0 0 500 500" fill="none" preserveAspectRatio="xMidYMid slice">
+        <rect width="500" height="500" fill="#091410"/>
+        <!-- topo -->
+        <path d="M-10 180 Q80 140 170 165 Q260 190 350 152 Q430 120 510 148" stroke="#1c4030" stroke-width=".9" fill="none"/>
+        <path d="M-10 205 Q80 168 170 192 Q260 216 350 179 Q430 148 510 174" stroke="#1c4030" stroke-width=".8" fill="none"/>
+        <path d="M-10 228 Q80 194 170 215 Q260 238 350 203 Q430 174 510 198" stroke="#2d6a4f" stroke-width=".7" fill="none"/>
+        <path d="M-10 250 Q80 218 170 237 Q260 256 350 224 Q430 196 510 220" stroke="#2d6a4f" stroke-width=".6" fill="none"/>
+        <!-- small area polygon 1 -->
+        <polygon points="90,165 145,148 175,180 168,210 130,215 82,195" fill="#1a3d28" stroke="#40916c" stroke-width="1" opacity=".75"/>
+        <!-- small area polygon 2 — paddock -->
+        <polygon points="260,148 320,135 355,162 345,195 305,200 252,172" fill="#1a3525" stroke="#2d6a4f" stroke-width=".9" opacity=".7"/>
+        <!-- small area polygon 3 -->
+        <polygon points="370,210 415,198 438,225 428,252 395,255 365,238" fill="#1c3525" stroke="#40916c" stroke-width=".9" opacity=".65"/>
+        <!-- paddock tree symbols -->
+        <circle cx="105" cy="188" r="9" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/>
+        <circle cx="122" cy="179" r="6" fill="#1e4a2a"/>
+        <circle cx="135" cy="187" r="7" fill="#1e4a2a" stroke="#2d6a4f" stroke-width=".7"/>
+        <line x1="105" y1="197" x2="105" y2="212" stroke="#2d6a4f" stroke-width="1.2"/>
+        <line x1="122" y1="185" x2="122" y2="198" stroke="#2d6a4f" stroke-width="1.2"/>
+        <line x1="135" y1="194" x2="135" y2="208" stroke="#2d6a4f" stroke-width="1.2"/>
+        <circle cx="280" cy="162" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/>
+        <circle cx="298" cy="155" r="7" fill="#1e4a2a"/>
+        <circle cx="315" cy="163" r="8" fill="#1e4a2a" stroke="#2d6a4f" stroke-width=".7"/>
+        <line x1="280" y1="172" x2="280" y2="188" stroke="#2d6a4f" stroke-width="1.2"/>
+        <line x1="298" y1="162" x2="298" y2="175" stroke="#2d6a4f" stroke-width="1.2"/>
+        <line x1="315" y1="171" x2="315" y2="185" stroke="#2d6a4f" stroke-width="1.2"/>
+        <circle cx="390" cy="230" r="8" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/>
+        <circle cx="406" cy="222" r="6" fill="#1e4a2a"/>
+        <line x1="390" y1="238" x2="390" y2="252" stroke="#2d6a4f" stroke-width="1.2"/>
+        <line x1="406" y1="228" x2="406" y2="240" stroke="#2d6a4f" stroke-width="1.1"/>
+        <!-- heritage -->
+        <polygon points="205,255 200,266 210,266" fill="#f4a926" opacity=".95"/>
+        <circle cx="205" cy="254" r="9" stroke="#f4a926" stroke-width=".6" fill="none" opacity=".5"/>
+        <polygon points="350,292 345,303 355,303" fill="#f4a926" opacity=".85"/>
+        <!-- GPS survey points -->
+        <circle cx="118" cy="235" r="3" fill="#74c69d" opacity=".9"/>
+        <circle cx="185" cy="220" r="3" fill="#74c69d" opacity=".9"/>
+        <circle cx="248" cy="228" r="3" fill="#74c69d" opacity=".9"/>
+        <circle cx="310" cy="215" r="3" fill="#74c69d" opacity=".9"/>
+        <circle cx="372" cy="258" r="3" fill="#74c69d" opacity=".9"/>
+        <!-- grid -->
+        <line x1="0" y1="130" x2="500" y2="130" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <line x1="0" y1="260" x2="500" y2="260" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <line x1="0" y1="390" x2="500" y2="390" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <line x1="125" y1="0" x2="125" y2="500" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <line x1="250" y1="0" x2="250" y2="500" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <line x1="375" y1="0" x2="375" y2="500" stroke="rgba(116,198,157,.05)" stroke-width=".5"/>
+        <!-- legend -->
+        <rect x="16" y="426" width="200" height="62" rx="3" fill="rgba(9,20,16,.82)"/>
+        <text x="24" y="442" font-family="monospace" font-size="7" fill="rgba(255,255,255,.35)" letter-spacing="1">PATRICK NANKIVELL · QGIS</text>
+        <circle cx="24" cy="454" r="3" fill="#74c69d"/><text x="33" y="457" font-family="monospace" font-size="7" fill="rgba(255,255,255,.5)">GPS survey point</text>
+        <polygon points="100,451 96,459 104,459" fill="#f4a926"/><text x="110" y="457" font-family="monospace" font-size="7" fill="rgba(255,255,255,.5)">Heritage site</text>
+        <circle cx="24" cy="470" r="5" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/><text x="33" y="473" font-family="monospace" font-size="7" fill="rgba(255,255,255,.5)">Paddock tree</text>
+        <rect x="95" y="465" width="10" height="7" fill="#1a3525" stroke="#2d6a4f" stroke-width=".6"/><text x="110" y="473" font-family="monospace" font-size="7" fill="rgba(255,255,255,.5)">Small area</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="strip">
+    <div class="strip-item"><span class="sdot"></span>Aboriginal Cultural Heritage Mapping</div>
+    <div class="strip-item"><span class="sdot"></span>Small Area Clearing Assessment</div>
+    <div class="strip-item"><span class="sdot"></span>Paddock Tree Mapping & Assessment</div>
+    <div class="strip-item"><span class="sdot"></span>Tree Identification & Survey</div>
+    <div class="strip-item"><span class="sdot"></span>Heritage Report Writing</div>
+    <div class="strip-item"><span class="sdot"></span>QGIS Spatial Analysis</div>
+    <div class="strip-item"><span class="sdot"></span>NSW Government Compliance</div>
+  </div>
+
+  <!-- About -->
+  <div class="about">
+    <div class="about-inner">
+      <div class="about-left">
+        <div class="eyebrow" style="color:var(--amber2);margin-bottom:14px">About Patrick</div>
+        <h2 style="font-family:var(--serif);font-size:34px;color:#fff;margin-bottom:16px;line-height:1.2">GIS and heritage expertise built project by project across NSW.</h2>
+        <p>I'm Patrick Nankivell — an independent QGIS specialist based in NSW with hands-on experience in Aboriginal cultural heritage assessment, tree and vegetation survey, small area clearing documentation, and paddock tree mapping.</p>
+        <p>Over 15+ projects I've developed practical skills in field survey, QGIS mapping, heritage identification, and the report writing that sits alongside the spatial work — from AHIMS desktop reviews through to tree removal and native vegetation clearing documentation.</p>
+        <p>I work with a trusted clearing contractor with direct NSW Government project experience in small area and paddock tree clearing. All client work is kept strictly confidential — I don't name clients or disclose project locations.</p>
+        <div class="about-chips">
+          <span class="chip">QGIS 3.x</span><span class="chip">Field Survey</span><span class="chip">Heritage Reports</span><span class="chip">Tree Survey</span><span class="chip">Small Areas</span><span class="chip">Paddock Trees</span><span class="chip">PyQGIS</span><span class="chip">NSW Planning</span>
+        </div>
+      </div>
+      <div class="about-cards">
+        <div class="about-card"><div class="n">15+</div><div class="l">Projects</div><div class="d">Heritage, tree, clearing & spatial mapping</div></div>
+        <div class="about-card"><div class="n">100%</div><div class="l">Confidential</div><div class="d">Client names and site details never disclosed</div></div>
+        <div class="about-card"><div class="n">NSW</div><div class="l">Primary region</div><div class="d">Field and desktop work across NSW</div></div>
+        <div class="about-card"><div class="n">2-in-1</div><div class="l">Mapping + Clearing</div><div class="d">QGIS mapping paired with on-ground clearing partner</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Small Areas & Paddock Trees teaser -->
+  <div style="background:var(--ink2);padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center">
+    <div>
+      <div class="sec-tag-a" style="margin-bottom:12px">Specialist service</div>
+      <h2 style="font-family:var(--serif);font-size:36px;color:#fff;line-height:1.15;margin-bottom:16px">Small area clearing & paddock tree mapping</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.78;margin-bottom:14px">From a single paddock tree to a multi-hectare small area clearing — I provide the QGIS mapping, tree-by-tree assessment, and written documentation needed to meet NSW legislative requirements.</p>
+      <p style="color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.78;margin-bottom:28px">Working alongside a contractor with direct NSW Government clearing experience means you get both the spatial record and the on-ground works under one coordinated service.</p>
+      <button class="btn-p" onclick="showPage('clearings')">See the full service →</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:20px">
+        <div style="font-family:var(--serif);font-size:28px;color:#fff;margin-bottom:6px">GPS</div>
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase">Every tree located</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.42);margin-top:6px;line-height:1.55">Individual tree coordinates, DBH, species, condition mapped in QGIS</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:20px">
+        <div style="font-family:var(--serif);font-size:28px;color:#fff;margin-bottom:6px">NSW</div>
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase">Legislation-ready</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.42);margin-top:6px;line-height:1.55">Reports and maps prepared to meet biodiversity, planning and heritage requirements</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:20px">
+        <div style="font-family:var(--serif);font-size:28px;color:#fff;margin-bottom:6px">Full</div>
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase">Record provided</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.42);margin-top:6px;line-height:1.55">Pre- and post-clearing spatial records, shapefiles, and compliance documentation</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:20px">
+        <div style="font-family:var(--serif);font-size:28px;color:#fff;margin-bottom:6px">GovEx</div>
+        <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.38);letter-spacing:1px;text-transform:uppercase">Partner experience</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.42);margin-top:6px;line-height:1.55">Clearing contractor with direct NSW Government project history</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Process -->
+  <div class="process">
+    <section>
+      <div class="sec-tag">How I work</div>
+      <h2 class="sec-title">Simple, transparent process</h2>
+      <p class="sec-lead">Clear scope, fixed price, no surprises. Client confidentiality maintained throughout.</p>
+      <div class="proc-steps">
+        <div class="proc-step"><div class="proc-num">01</div><h4>Initial enquiry</h4><p>Describe your project, site, and timeline. I'll respond within one business day.</p></div>
+        <div class="proc-step"><div class="proc-num">02</div><h4>Scope & quote</h4><p>Written scope and fixed-fee quote. You know the cost before work begins.</p></div>
+        <div class="proc-step"><div class="proc-num">03</div><h4>Field & mapping</h4><p>Field survey, QGIS mapping, and report drafting with progress check-ins.</p></div>
+        <div class="proc-step"><div class="proc-num">04</div><h4>Delivery</h4><p>Maps, GIS data, and signed reports. All client details kept confidential.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="cta">
+    <div class="sec-tag-a" style="margin-bottom:10px">Get in touch</div>
+    <h2>Ready to work together?</h2>
+    <p>Heritage assessment, tree survey, clearing map, or QGIS project — get in touch and I'll reply within one business day.</p>
+    <div class="cta-form"><input type="email" placeholder="your@email.com"><button>Send enquiry</button></div>
+  </div>
+  <footer>
+    <div class="foot-copy">© 2026 Patrick Nankivell · QGIS Mapping · NSW</div>
+    <div class="foot-links"><a onclick="showPage('contact')">Contact</a><a onclick="showPage('services')">Services</a></div>
+  </footer>
+</div>
+
+<!-- ========================================================
+     SMALL AREAS & PADDOCK TREES PAGE
+     ======================================================== -->
+<div id="page-clearings" class="page">
+
+  <div class="clearings-hero">
+    <div class="clearings-hero-text">
+      <div class="eyebrow" style="color:var(--amber2);margin-bottom:14px">Specialist mapping service</div>
+      <h2>Small area clearing & paddock tree mapping</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.78;margin-bottom:12px">Accurate QGIS mapping and written assessment for native vegetation clearing — from a single paddock tree to multi-hectare small area removals under NSW legislation.</p>
+      <p style="color:rgba(255,255,255,.6);font-size:14.5px;line-height:1.78;margin-bottom:24px">Every tree is GPS-located, identified, assessed, and mapped. Every clearing area is spatially defined and documented to support compliance with the Biodiversity Conservation Act, Local Land Services Act, and applicable local planning instruments.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-p" onclick="showPage('contact')">Enquire about a project</button>
+        <button class="btn-o" onclick="showPage('portfolio')">See example projects</button>
+      </div>
+    </div>
+    <div class="clearings-hero-map">
+      <div class="map-pill">Paddock tree survey · QGIS</div>
+      <svg viewBox="0 0 460 360" fill="none" preserveAspectRatio="xMidYMid slice">
+        <rect width="460" height="360" fill="#0a1510"/>
+        <!-- paddock boundary -->
+        <rect x="40" y="40" width="380" height="280" rx="4" fill="none" stroke="#2d6a4f" stroke-width="1" stroke-dasharray="6 4" opacity=".5"/>
+        <!-- paddock fill zones -->
+        <rect x="40" y="40" width="380" height="280" rx="4" fill="#1a3525" opacity=".25"/>
+        <!-- internal fence line -->
+        <line x1="40" y1="180" x2="420" y2="180" stroke="#40916c" stroke-width=".7" stroke-dasharray="4 3" opacity=".4"/>
+        <line x1="230" y1="40" x2="230" y2="320" stroke="#40916c" stroke-width=".7" stroke-dasharray="4 3" opacity=".4"/>
+        <!-- trees — upper left paddock (to be retained) -->
+        <circle cx="90" cy="90" r="14" fill="#1e4a2a" stroke="#40916c" stroke-width="1.2" opacity=".9"/>
+        <circle cx="90" cy="90" r="7" fill="#265e35" opacity=".8"/>
+        <line x1="90" y1="104" x2="90" y2="124" stroke="#40916c" stroke-width="1.5"/>
+        <text x="90" y="136" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T01 R</text>
+        <circle cx="155" cy="105" r="12" fill="#1e4a2a" stroke="#40916c" stroke-width="1" opacity=".85"/>
+        <circle cx="155" cy="105" r="6" fill="#265e35" opacity=".8"/>
+        <line x1="155" y1="117" x2="155" y2="134" stroke="#40916c" stroke-width="1.5"/>
+        <text x="155" y="145" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T02 R</text>
+        <circle cx="118" cy="148" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".9" opacity=".8"/>
+        <line x1="118" y1="158" x2="118" y2="172" stroke="#40916c" stroke-width="1.3"/>
+        <text x="118" y="183" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T03</text>
+        <!-- trees — upper right (proposed clearing) -->
+        <circle cx="290" cy="80" r="13" fill="#3d1a1a" stroke="#c0392b" stroke-width="1.2" opacity=".85"/>
+        <circle cx="290" cy="80" r="6" fill="#501f1f" opacity=".7"/>
+        <line x1="290" y1="93" x2="290" y2="110" stroke="#c0392b" stroke-width="1.5"/>
+        <text x="290" y="122" font-family="monospace" font-size="8" fill="#e74c3c" text-anchor="middle">T04 CLR</text>
+        <circle cx="355" cy="95" r="11" fill="#3d1a1a" stroke="#c0392b" stroke-width="1.1" opacity=".8"/>
+        <line x1="355" y1="106" x2="355" y2="121" stroke="#c0392b" stroke-width="1.3"/>
+        <text x="355" y="132" font-family="monospace" font-size="8" fill="#e74c3c" text-anchor="middle">T05 CLR</text>
+        <circle cx="395" cy="68" r="9" fill="#3d1a1a" stroke="#c0392b" stroke-width=".9" opacity=".75"/>
+        <line x1="395" y1="77" x2="395" y2="90" stroke="#c0392b" stroke-width="1.2"/>
+        <text x="395" y="101" font-family="monospace" font-size="8" fill="#e74c3c" text-anchor="middle">T06</text>
+        <!-- lower paddock trees (mixed) -->
+        <circle cx="80" cy="250" r="11" fill="#1e4a2a" stroke="#40916c" stroke-width="1" opacity=".8"/>
+        <line x1="80" y1="261" x2="80" y2="276" stroke="#40916c" stroke-width="1.3"/>
+        <text x="80" y="287" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T07 R</text>
+        <circle cx="160" cy="270" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".9" opacity=".75"/>
+        <line x1="160" y1="280" x2="160" y2="294" stroke="#40916c" stroke-width="1.2"/>
+        <text x="160" y="305" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T08</text>
+        <circle cx="300" cy="240" r="12" fill="#3d1a1a" stroke="#c0392b" stroke-width="1.1" opacity=".8"/>
+        <line x1="300" y1="252" x2="300" y2="267" stroke="#c0392b" stroke-width="1.3"/>
+        <text x="300" y="279" font-family="monospace" font-size="8" fill="#e74c3c" text-anchor="middle">T09 CLR</text>
+        <circle cx="375" cy="260" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".9" opacity=".8"/>
+        <line x1="375" y1="270" x2="375" y2="284" stroke="#40916c" stroke-width="1.2"/>
+        <text x="375" y="295" font-family="monospace" font-size="8" fill="#74c69d" text-anchor="middle">T10 R</text>
+        <!-- heritage site -->
+        <polygon points="200,200 195,212 205,212" fill="#f4a926" opacity=".9"/>
+        <circle cx="200" cy="199" r="12" stroke="#f4a926" stroke-width=".7" fill="none" opacity=".4"/>
+        <text x="200" y="225" font-family="monospace" font-size="7" fill="#f4a926" text-anchor="middle">AHIMS check</text>
+        <!-- clearing zone highlight -->
+        <rect x="254" y="50" width="180" height="120" rx="3" fill="#c0392b" fill-opacity=".07" stroke="#c0392b" stroke-width=".8" stroke-dasharray="4 3"/>
+        <text x="344" y="185" font-family="monospace" font-size="7" fill="rgba(192,57,43,.7)" text-anchor="middle">Proposed clearing zone</text>
+        <!-- legend -->
+        <rect x="16" y="300" width="185" height="52" rx="3" fill="rgba(9,20,16,.85)"/>
+        <circle cx="25" cy="312" r="5" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/><text x="34" y="315" font-family="monospace" font-size="7" fill="rgba(255,255,255,.6)">Retain (R)</text>
+        <circle cx="25" cy="326" r="5" fill="#3d1a1a" stroke="#c0392b" stroke-width=".8"/><text x="34" y="329" font-family="monospace" font-size="7" fill="rgba(255,255,255,.6)">Clear (CLR)</text>
+        <polygon points="100,309 96,317 104,317" fill="#f4a926"/><text x="110" y="314" font-family="monospace" font-size="7" fill="rgba(255,255,255,.6)">Heritage check</text>
+        <text x="25" y="343" font-family="monospace" font-size="7" fill="rgba(255,255,255,.3)" letter-spacing=".5">Patrick Nankivell · QGIS</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Three-column detail -->
+  <div class="clearings-detail">
+    <div class="clearing-type">
+      <div class="clearing-type-icon" style="background:var(--sage-pale)">
+        <svg viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="5" stroke="#2d6a4f" stroke-width="1.3"/><line x1="11" y1="13" x2="11" y2="20" stroke="#2d6a4f" stroke-width="1.3" stroke-linecap="round"/><path d="M7 20h8" stroke="#2d6a4f" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Paddock tree mapping</h3>
+      <p>Every paddock tree GPS-located and assessed individually. Species, DBH, height, crown, condition, and retention value recorded in the field and mapped in QGIS. Outputs suitable for clearing applications, property management plans, and offset calculations.</p>
+      <ul class="clearing-steps">
+        <li>Individual tree GPS coordinates recorded on-site</li>
+        <li>Species identification and biometric assessment (DBH, height, crown)</li>
+        <li>Structural condition and useful life expectancy (ULE)</li>
+        <li>Retain / clear recommendation per tree</li>
+        <li>QGIS map with tree point layer, species labels, and TPZ zones</li>
+        <li>Written paddock tree assessment report</li>
+        <li>Biodiversity offset calculation if required</li>
+      </ul>
+    </div>
+
+    <div class="clearing-type" style="background:var(--sage-pale)">
+      <div class="clearing-type-icon" style="background:#fff">
+        <svg viewBox="0 0 22 22" fill="none"><polygon points="3,5 11,2 19,5 19,17 11,20 3,17" stroke="#2d6a4f" stroke-width="1.2" fill="none"/><path d="M11 2v18M3 5l8 4 8-4" stroke="#2d6a4f" stroke-width=".9"/></svg>
+      </div>
+      <h3>Small area clearing assessment</h3>
+      <p>Spatial assessment and documentation for small area native vegetation clearing proposals under NSW legislation. The clearing extent is accurately mapped in QGIS, vegetation communities are identified, and a written assessment is prepared for planning submission.</p>
+      <ul class="clearing-steps">
+        <li>QGIS mapping of proposed clearing boundary and extent (m²/ha)</li>
+        <li>Vegetation community identification and mapping</li>
+        <li>All trees within clearing zone individually assessed</li>
+        <li>Heritage database check (AHIMS) for clearing area</li>
+        <li>Biodiversity Conservation Act and LLS Act compliance check</li>
+        <li>Written small area clearing assessment report</li>
+        <li>Pre- and post-clearing spatial records provided</li>
+      </ul>
+    </div>
+
+    <div class="clearing-type">
+      <div class="clearing-type-icon" style="background:var(--amber-pale)">
+        <svg viewBox="0 0 22 22" fill="none"><path d="M4 18V8l7-5 7 5v10" stroke="#c77d0a" stroke-width="1.3" stroke-linejoin="round"/><rect x="8" y="13" width="6" height="5" stroke="#c77d0a" stroke-width="1.1"/><path d="M3 18h16" stroke="#c77d0a" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </div>
+      <h3>On-ground clearing partner</h3>
+      <p>I work alongside an experienced clearing contractor with direct NSW Government project history in small area native vegetation clearing and paddock tree removal. Once the QGIS mapping and assessment is complete, the clearing can proceed under the same coordinated engagement.</p>
+      <ul class="clearing-steps">
+        <li>NSW Government project experience in small area clearing</li>
+        <li>Paddock tree removal to stump or full extraction</li>
+        <li>Works carried out to the approved clearing extent only</li>
+        <li>Complies with mapped TPZ and retain/remove recommendations</li>
+        <li>Post-clearing site photos and compliance record provided</li>
+        <li>Available across NSW for small to medium area projects</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="clearing-nsw">
+    <div class="clearing-nsw-badge">NSW Legislation</div>
+    <p>Small area and paddock tree clearing in NSW is regulated under the <strong>Biodiversity Conservation Act 2016</strong>, the <strong>Local Land Services Act 2013</strong>, and applicable <strong>Local Environmental Plans</strong>. The right mapping and documentation upfront avoids compliance issues and delays. All assessments are prepared with reference to current legislative requirements and the NSW Biodiversity Offsets Scheme.</p>
+  </div>
+
+  <!-- Partner section -->
+  <div class="partner">
+    <div class="partner-inner">
+      <div class="partner-left">
+        <div class="sec-tag-a" style="margin-bottom:12px">Partner clearing service</div>
+        <h2>Mapping + on-ground clearing under one engagement</h2>
+        <p>Combining my QGIS mapping and assessment with an experienced clearing contractor means the spatial work and the physical works are coordinated from the start — reducing miscommunication, delays, and the risk of clearing outside the approved extent.</p>
+        <p>The contractor has direct NSW Government project experience and works to the mapped clearing boundaries and retain/remove recommendations I produce.</p>
+        <div class="partner-chips">
+          <span class="partner-chip">Small area clearing</span>
+          <span class="partner-chip">Paddock trees</span>
+          <span class="partner-chip">NSW Gov. experience</span>
+          <span class="partner-chip">Stump removal</span>
+          <span class="partner-chip">Compliance record</span>
+        </div>
+      </div>
+      <div class="partner-right">
+        <h4>What the combined service covers</h4>
+        <div class="partner-row">Pre-clearing QGIS mapping of all trees and clearing extent</div>
+        <div class="partner-row">Individual tree assessment — species, DBH, condition, retain/remove</div>
+        <div class="partner-row">Heritage database check (AHIMS) for the clearing area</div>
+        <div class="partner-row">Written small area or paddock tree assessment report</div>
+        <div class="partner-row">Biodiversity offset calculation and documentation</div>
+        <div class="partner-row">On-ground clearing by experienced NSW contractor</div>
+        <div class="partner-row">Post-clearing compliance record and updated spatial data</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta">
+    <div class="sec-tag-a" style="margin-bottom:10px">Get in touch</div>
+    <h2>Have a clearing project?</h2>
+    <p>Tell me the site, the approximate area, and whether it's paddock trees or broader vegetation — I'll come back to you with a clear scope and quote.</p>
+    <div class="cta-form"><input type="email" placeholder="your@email.com"><button>Send enquiry</button></div>
+  </div>
+  <footer>
+    <div class="foot-copy">© 2026 Patrick Nankivell · QGIS Mapping · NSW</div>
+    <div class="foot-links"><a onclick="showPage('home')">Home</a><a onclick="showPage('contact')">Contact</a></div>
+  </footer>
+</div>
+
+<!-- ========================================================
+     SERVICES PAGE
+     ======================================================== -->
+<div id="page-services" class="page">
+  <div style="background:var(--ink);padding:56px 56px 48px">
+    <div class="eyebrow" style="color:var(--amber2);margin-bottom:14px">What I offer</div>
+    <h1 style="font-family:var(--serif);font-size:42px;color:#fff;margin-bottom:12px;line-height:1.1">Services</h1>
+    <p style="color:rgba(255,255,255,.55);font-size:15px;max-width:520px;line-height:1.75">Practical GIS and heritage services for land managers, developers, consultants, and government clients across NSW. Clear scope, fixed price, full confidentiality.</p>
+  </div>
+  <section style="background:var(--sand)">
+    <div class="svc-grid">
+      <div class="svc-card svc-green">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="4" stroke="#2d6a4f" stroke-width="1.2"/><circle cx="10" cy="10" r="8" stroke="#2d6a4f" stroke-width=".8" stroke-dasharray="2 1.5"/><line x1="10" y1="1" x2="10" y2="19" stroke="#2d6a4f" stroke-width=".8"/><line x1="1" y1="10" x2="19" y2="10" stroke="#2d6a4f" stroke-width=".8"/></svg></div>
+        <h3>Aboriginal Heritage Mapping</h3>
+        <p>QGIS mapping of heritage sites, survey extents, and constraint zones. Supports CHMPs, heritage assessments, and planning applications. Includes AHIMS desktop review and field GPS survey.</p>
+        <span class="svc-badge badge-core">Core service</span>
+      </div>
+      <div class="svc-card svc-green">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M10 2v12M7 8l3-6 3 6M6 18h8" stroke="#2d6a4f" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="10" cy="11" rx="4" ry="2.5" stroke="#2d6a4f" stroke-width=".9"/></svg></div>
+        <h3>Tree Survey & Mapping</h3>
+        <p>Field-based tree identification and QGIS mapping — species, DBH, height, crown, condition, and retention value. Mapped outputs for arborist reports, DA submissions, and clearing assessments.</p>
+        <span class="svc-badge badge-core">Core service</span>
+      </div>
+      <div class="svc-card svc-green">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="14" rx="2" stroke="#2d6a4f" stroke-width="1.2"/><path d="M7 10h6M10 7v6" stroke="#2d6a4f" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <h3>Heritage Report Writing</h3>
+        <p>Specialist report writing for Aboriginal cultural heritage assessments — AHIMS desktop review, field findings, community consultation, heritage sensitivity assessment, and recommendations.</p>
+        <span class="svc-badge badge-core">Core service</span>
+      </div>
+      <div class="svc-card svc-amber">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><polygon points="3,5 10,2 17,5 17,15 10,18 3,15" stroke="#c77d0a" stroke-width="1.2" fill="none"/><path d="M3 5l7 4 7-4M10 9v9" stroke="#c77d0a" stroke-width=".9"/></svg></div>
+        <h3>Small Area Clearing Assessment</h3>
+        <p>QGIS mapping of proposed clearing extent and vegetation communities. All trees within the clearing zone individually assessed. Written report for NSW planning or land management submission.</p>
+        <span class="svc-badge badge-expand">Expanding</span>
+      </div>
+      <div class="svc-card svc-amber">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="6" r="4" stroke="#c77d0a" stroke-width="1.2"/><line x1="10" y1="10" x2="10" y2="17" stroke="#c77d0a" stroke-width="1.3" stroke-linecap="round"/><line x1="6" y1="17" x2="14" y2="17" stroke="#c77d0a" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+        <h3>Paddock Tree Mapping</h3>
+        <p>GPS-located, individually assessed paddock trees mapped in QGIS. Species, DBH, structural condition, retain/remove recommendation, TPZ radius. Outputs for clearing approvals and offset calculations.</p>
+        <span class="svc-badge badge-expand">Expanding</span>
+      </div>
+      <div class="svc-card svc-amber">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M3 17l4-4 4 2 6-9" stroke="#c77d0a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Biodiversity Offset Reporting</h3>
+        <p>Calculation and reporting of offset obligations arising from clearing. Spatial and written output suitable for submission to NSW planning authorities under the Biodiversity Offsets Scheme.</p>
+        <span class="svc-badge badge-expand">Expanding</span>
+      </div>
+      <div class="svc-card svc-teal">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M2 14l5-5 4 4 3-3 4 4" stroke="#1abc9c" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>QGIS Spatial Analysis</h3>
+        <p>Custom spatial analysis for land management, environmental, and planning projects. Overlay analysis, suitability mapping, catchment work — delivered as QGIS project files or exported data packages.</p>
+        <span class="svc-badge" style="color:#1abc9c;background:rgba(26,188,156,.08);border:1px solid rgba(26,188,156,.2)">Expanding</span>
+      </div>
+      <div class="svc-card svc-teal">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" rx="2" stroke="#1abc9c" stroke-width="1.2"/><path d="M6 8h8M6 12h5" stroke="#1abc9c" stroke-width="1.1" stroke-linecap="round"/></svg></div>
+        <h3>Map Production & Layouts</h3>
+        <p>Publication-ready QGIS map layouts for reports and planning submissions. Clear cartography, professional legends, suitable for A3 or A4 print.</p>
+        <span class="svc-badge" style="color:#1abc9c;background:rgba(26,188,156,.08);border:1px solid rgba(26,188,156,.2)">Core service</span>
+      </div>
+      <div class="svc-card svc-amber">
+        <div class="svc-icon"><svg viewBox="0 0 20 20" fill="none"><path d="M4 18V8l6-5 6 5v10" stroke="#c77d0a" stroke-width="1.3" stroke-linejoin="round"/><rect x="8" y="13" width="4" height="5" stroke="#c77d0a" stroke-width="1.1"/></svg></div>
+        <h3>On-Ground Clearing (Partner)</h3>
+        <p>Small area and paddock tree clearing carried out by an experienced NSW contractor — coordinated with my QGIS mapping and assessment outputs for a seamless end-to-end service.</p>
+        <span class="svc-badge badge-partner">Partner service</span>
+      </div>
+    </div>
+  </section>
+  <div class="cta">
+    <h2>Not sure what you need?</h2>
+    <p>Describe the project and I'll let you know how I can help and give you a clear quote.</p>
+    <div class="cta-form"><input type="email" placeholder="your@email.com"><button>Send enquiry</button></div>
+  </div>
+  <footer><div class="foot-copy">© 2026 Patrick Nankivell · QGIS Mapping · NSW</div><div class="foot-links"><a onclick="showPage('home')">Home</a><a onclick="showPage('contact')">Contact</a></div></footer>
+</div>
+
+<!-- ========================================================
+     PORTFOLIO PAGE
+     ======================================================== -->
+<div id="page-portfolio" class="page">
+  <div style="background:var(--ink);padding:56px 56px 48px">
+    <div class="eyebrow" style="color:var(--amber2);margin-bottom:14px">Selected work</div>
+    <h1 style="font-family:var(--serif);font-size:42px;color:#fff;margin-bottom:12px">Portfolio</h1>
+    <p style="color:rgba(255,255,255,.55);font-size:15px;max-width:500px;line-height:1.75">15+ completed projects across Aboriginal heritage, tree survey, small area clearing, and paddock tree mapping. Client names and project details are kept strictly confidential.</p>
+  </div>
+  <section style="background:var(--sage-pale)">
+    <div class="port-disclaimer"><strong>Client confidentiality:</strong> All client identities and project-specific details are kept strictly private. The work below is described in general terms to illustrate the scope and nature of projects undertaken.</div>
+    <div class="port-grid">
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><path d="M0 80 Q55 55 110 72 Q165 90 220 60 Q255 40 280 55" stroke="#2d6a4f" stroke-width=".9" fill="none"/><polygon points="120,48 115,58 125,58" fill="#f4a926" opacity=".9"/><polygon points="185,65 180,75 190,75" fill="#f4a926" opacity=".8"/><circle cx="70" cy="68" r="3" fill="#74c69d"/><circle cx="148" cy="74" r="3" fill="#74c69d"/><circle cx="215" cy="57" r="3" fill="#74c69d"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">HERITAGE SURVEY · RURAL NSW</text></svg><div class="port-sector">Heritage</div></div>
+        <div class="port-body"><h3>Aboriginal heritage field survey, rural NSW</h3><p>AHIMS desktop review, systematic pedestrian survey, QGIS mapping of sites and survey extent, written heritage assessment report.</p><div class="port-tags"><span class="port-tag">Heritage</span><span class="port-tag">AHIMS</span><span class="port-tag">Report</span></div></div>
+      </div>
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><circle cx="70" cy="52" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/><line x1="70" y1="62" x2="70" y2="80" stroke="#40916c" stroke-width="1.3"/><circle cx="130" cy="48" r="12" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/><line x1="130" y1="60" x2="130" y2="80" stroke="#40916c" stroke-width="1.3"/><circle cx="195" cy="52" r="9" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/><line x1="195" y1="61" x2="195" y2="78" stroke="#40916c" stroke-width="1.2"/><circle cx="240" cy="55" r="11" fill="#3d1a1a" stroke="#c0392b" stroke-width=".9"/><line x1="240" y1="66" x2="240" y2="82" stroke="#c0392b" stroke-width="1.2"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">PADDOCK TREE SURVEY</text></svg><div class="port-sector">Paddock Trees</div></div>
+        <div class="port-body"><h3>Paddock tree survey and assessment, western NSW</h3><p>GPS-located individual paddock tree mapping. Species, DBH, condition, retain/remove recommendation. Written assessment and offset calculation for clearing approval.</p><div class="port-tags"><span class="port-tag">Paddock trees</span><span class="port-tag">GPS mapping</span><span class="port-tag">NSW clearing</span></div></div>
+      </div>
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><polygon points="55,35 145,25 210,40 220,80 190,95 100,90 45,72" fill="#1a3d28" stroke="#40916c" stroke-width="1" opacity=".8"/><rect x="55" y="35" width="165" height="60" rx="2" fill="#c0392b" fill-opacity=".07" stroke="#c0392b" stroke-width=".7" stroke-dasharray="3 2"/><circle cx="90" cy="60" r="7" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/><circle cx="130" cy="55" r="8" fill="#3d1a1a" stroke="#c0392b" stroke-width=".8"/><circle cx="170" cy="62" r="7" fill="#3d1a1a" stroke="#c0392b" stroke-width=".8"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">SMALL AREA CLEARING ASSESSMENT</text></svg><div class="port-sector">Small Area</div></div>
+        <div class="port-body"><h3>Small area clearing assessment and mapping</h3><p>QGIS mapping of clearing extent, vegetation communities, and individual trees. Written report for NSW planning submission including heritage check.</p><div class="port-tags"><span class="port-tag">Small area</span><span class="port-tag">NSW planning</span><span class="port-tag">Vegetation</span></div></div>
+      </div>
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><path d="M0 85 Q55 60 110 78 Q165 96 220 68 Q255 52 280 60" stroke="#2d6a4f" stroke-width=".9" fill="none"/><path d="M0 98 Q55 74 110 90 Q165 108 220 82 Q255 66 280 74" stroke="#40916c" stroke-width=".7" fill="none"/><polygon points="90,60 85,70 95,70" fill="#f4a926" opacity=".9"/><polygon points="172,72 167,82 177,82" fill="#f4a926" opacity=".85"/><polygon points="52,74 47,84 57,84" fill="#f4a926" opacity=".75"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">HERITAGE · INFRASTRUCTURE CORRIDOR</text></svg><div class="port-sector">Heritage</div></div>
+        <div class="port-body"><h3>Heritage constraint mapping, infrastructure corridor</h3><p>AHIMS desktop review and field survey mapped in QGIS. Heritage site buffers and sensitivity zones for design team use.</p><div class="port-tags"><span class="port-tag">Heritage</span><span class="port-tag">Infrastructure</span><span class="port-tag">Constraint map</span></div></div>
+      </div>
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><circle cx="65" cy="55" r="9" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/><line x1="65" y1="64" x2="65" y2="80" stroke="#40916c" stroke-width="1.2"/><circle cx="115" cy="50" r="11" fill="#1e4a2a" stroke="#40916c" stroke-width=".9"/><line x1="115" y1="61" x2="115" y2="80" stroke="#40916c" stroke-width="1.2"/><circle cx="170" cy="54" r="8" fill="#3d1a1a" stroke="#c0392b" stroke-width=".8"/><line x1="170" y1="62" x2="170" y2="78" stroke="#c0392b" stroke-width="1.2"/><circle cx="215" cy="50" r="10" fill="#1e4a2a" stroke="#40916c" stroke-width=".8"/><line x1="215" y1="60" x2="215" y2="78" stroke="#40916c" stroke-width="1.2"/><polygon points="145,85 140,95 150,95" fill="#f4a926" opacity=".8"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">TREE SURVEY · DEVELOPMENT SITE</text></svg><div class="port-sector">Tree Survey</div></div>
+        <div class="port-body"><h3>Tree survey and mapping, development site</h3><p>Individual tree identification, assessment, and QGIS mapping to accompany a development application. Retain/remove recommendations and TPZ radii included.</p><div class="port-tags"><span class="port-tag">Tree survey</span><span class="port-tag">QGIS</span><span class="port-tag">DA support</span></div></div>
+      </div>
+      <div class="port-card">
+        <div class="port-thumb"><svg viewBox="0 0 280 120" fill="none"><rect width="280" height="120" fill="#0e1a12"/><rect x="35" y="28" width="210" height="68" rx="3" fill="none" stroke="#2d6a4f" stroke-width=".7"/><rect x="50" y="38" width="50" height="40" rx="2" fill="#1a3d28" opacity=".75"/><rect x="120" y="38" width="45" height="58" rx="2" fill="#1a3d28" opacity=".55"/><rect x="185" y="46" width="45" height="50" rx="2" fill="#40916c" opacity=".25"/><polygon points="105,52 100,62 110,62" fill="#f4a926" opacity=".85"/><circle cx="142" cy="62" r="3" fill="#74c69d"/><text x="8" y="14" font-family="monospace" font-size="7" fill="rgba(255,255,255,.2)">HERITAGE + VEGETATION · COMBINED</text></svg><div class="port-sector">Combined</div></div>
+        <div class="port-body"><h3>Combined heritage and vegetation report</h3><p>Integrated QGIS mapping and written reporting covering both Aboriginal cultural heritage and tree/vegetation survey for a single site.</p><div class="port-tags"><span class="port-tag">Heritage</span><span class="port-tag">Vegetation</span><span class="port-tag">Integrated</span></div></div>
+      </div>
+    </div>
+  </section>
+  <div class="cta">
+    <h2>Looking for similar work?</h2>
+    <p>Get in touch and I'll let you know how I can help with your project.</p>
+    <div class="cta-form"><input type="email" placeholder="your@email.com"><button>Send enquiry</button></div>
+  </div>
+  <footer><div class="foot-copy">© 2026 Patrick Nankivell · QGIS Mapping · NSW</div><div class="foot-links"><a onclick="showPage('home')">Home</a><a onclick="showPage('contact')">Contact</a></div></footer>
+</div>
+
+<!-- ========================================================
+     AG PRICES PAGE  — UPDATE VALUES AT TOP OF FILE
+     ======================================================== -->
+<div id="page-agprices" class="page">
+  <div style="background:var(--amber);padding:48px 56px">
+    <div class="sec-tag-a" style="color:rgba(14,26,18,.55);margin-bottom:10px">Market intelligence</div>
+    <h1 style="font-family:var(--serif);font-size:40px;color:var(--ink);margin-bottom:8px">Agricultural Price Intelligence</h1>
+    <p style="font-size:14.5px;color:rgba(14,26,18,.65);max-width:500px;line-height:1.72">Current prices for wool, fertiliser, grains and livestock — sourced from AWEX, Argus Media, ABARES and MLA. Updated fortnightly.</p>
+  </div>
+  <section style="background:var(--sand)">
+    <div style="background:var(--red-pale);border:1px solid rgba(184,50,37,.2);border-left:4px solid var(--red);border-radius:6px;padding:18px 22px;margin-bottom:28px">
+      <h3 style="font-family:var(--serif);font-size:17px;color:var(--red);margin-bottom:8px">⚠ Fertiliser supply emergency — March 2026</h3>
+      <p style="font-size:13.5px;color:var(--ink2);line-height:1.72">US and Israeli strikes on Iran on 28 February cut supply through the Strait of Hormuz. East Coast urea is critically tight — most tonnes already allocated to existing contracts. <strong>Supply covers to mid-April only.</strong> Granular urea at A$880–1,000/t fca Geelong (up from A$760–770/t in January). At least one supplier sold out of MAP. Dyno Nobel announced the sale of Phosphate Hill plant (769,000 t/yr) on 9 March.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink);margin-bottom:4px">229,000t</div><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1px;text-transform:uppercase">Urea in transit · Kpler</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink);margin-bottom:4px">408,000t</div><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1px;text-transform:uppercase">MAP/DAP in transit · Kpler</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center"><div style="font-family:var(--serif);font-size:28px;color:var(--ink);margin-bottom:4px">~6 wks</div><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1px;text-transform:uppercase">East Coast urea coverage</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="background:var(--sage);padding:13px 18px;display:flex;justify-content:space-between"><span style="font-family:var(--mono);font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase">Fertiliser</span><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4)">Argus · 13 Mar 2026</span></div>
+        <div style="padding:0 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:13px;color:var(--ink2)">Granular Urea</div><div style="font-family:var(--mono);font-size:9px;color:#888;margin-top:1px">fca Geelong</div></div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$880–1,000/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--red)">▲ Critical</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:13px;color:var(--ink2)">DAP</div><div style="font-family:var(--mono);font-size:9px;color:#888;margin-top:1px">FOB Morocco</div></div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$1,215/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--amber)">▲ Tight</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">Potash MOP</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$515/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Stable</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0"><div style="font-size:13px;color:var(--ink2)">Single Super</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$440–480/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Stable</div></div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="background:var(--sage);padding:13px 18px;display:flex;justify-content:space-between"><span style="font-family:var(--mono);font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase">Wool</span><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4)">AWEX · Mar 2026</span></div>
+        <div style="padding:0 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">EMI</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">1,182¢/kg</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Firm</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">18 Micron</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">1,810¢/kg</div><div style="font-family:var(--mono);font-size:10px;color:var(--amber)">▲ Strong</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">21 Micron</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">1,420¢/kg</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Steady</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0"><div style="font-size:13px;color:var(--ink2)">16 Micron</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">2,210¢/kg</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Steady</div></div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="background:var(--sage);padding:13px 18px;display:flex;justify-content:space-between"><span style="font-family:var(--mono);font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase">Grains</span><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4)">ABARES · Mar 2026</span></div>
+        <div style="padding:0 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:13px;color:var(--ink2)">APW Wheat</div><div style="font-family:var(--mono);font-size:9px;color:#888;margin-top:1px">Port Kembla</div></div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$318/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Steady</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">Canola</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$698/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--amber)">▲ Firm</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0"><div style="font-size:13px;color:var(--ink2)">Feed Barley</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">A$268/t</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Stable</div></div></div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="background:var(--sage);padding:13px 18px;display:flex;justify-content:space-between"><span style="font-family:var(--mono);font-size:10px;color:#fff;letter-spacing:1.5px;text-transform:uppercase">Livestock</span><span style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.4)">MLA · Mar 2026</span></div>
+        <div style="padding:0 18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">EYCI</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">612¢/kg cwt</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Steady</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;color:var(--ink2)">Trade Lambs</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">820¢/kg cwt</div><div style="font-family:var(--mono);font-size:10px;color:var(--amber)">▲ Seasonal</div></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0"><div style="font-size:13px;color:var(--ink2)">Heavy Steers</div><div style="text-align:right"><div style="font-family:var(--mono);font-size:13px;color:var(--ink)">580¢/kg cwt</div><div style="font-family:var(--mono);font-size:10px;color:var(--sage)">→ Firm</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="background:var(--amber-pale);border:1px solid rgba(199,125,10,.18);border-radius:8px;padding:20px 24px;margin-bottom:24px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Argus Media · 13 March 2026</div>
+      <p style="font-size:13.5px;color:var(--ink2);line-height:1.75">The domestic market was focused on granular urea availability after supply was cut from the Persian Gulf via the Strait of Hormuz. Prompt supply along the East Coast is very tight, with most tonnes already allocated to existing contractual requirements. Enough supply through to mid-April — but more is needed after that. MAP/DAP demand picked up following restricted supply from Saudi Arabia — at least one supplier is sold out. Dyno Nobel is selling its Phosphate Hill plant (769,000 t/yr) to Mayfair/Ryowa II GPS for up to A$100m.</p>
+    </div>
+    <div class="sec-tag" style="margin-bottom:14px">Key sources</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Wool</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">AWEX</div><div style="font-size:12px;color:#5a6e5e">awex.com.au</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Fertiliser</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">Grain Growers / Argus</div><div style="font-size:12px;color:#5a6e5e">graingrowers.com.au</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Multi-commodity</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">ABARES</div><div style="font-size:12px;color:#5a6e5e">agriculture.gov.au/abares</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Livestock</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">MLA</div><div style="font-size:12px;color:#5a6e5e">mla.com.au</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Wool</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">AWI</div><div style="font-size:12px;color:#5a6e5e">wool.com</div></div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px"><div style="font-family:var(--mono);font-size:9px;color:var(--sage);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px">Fertiliser</div><div style="font-size:13.5px;font-weight:500;color:var(--ink);margin-bottom:4px">Fertilizer Australia</div><div style="font-size:12px;color:#5a6e5e">fertilizer.org.au</div></div>
+    </div>
+  </section>
+  <footer><div class="foot-copy">© 2026 Patrick Nankivell · Prices: AWEX, Argus, ABARES, MLA</div><div class="foot-links"><a onclick="showPage('home')">Home</a></div></footer>
+</div>
+
+<!-- ========================================================
+     CONTACT PAGE
+     ======================================================== -->
+<div id="page-contact" class="page">
+  <div class="contact-hero">
+    <div class="sec-tag" style="color:rgba(255,255,255,.5);margin-bottom:10px;display:inline-block">Get in touch</div>
+    <h1>Work with Patrick</h1>
+    <p>Heritage, tree survey, small area clearing, paddock trees, or QGIS mapping — describe your project and I'll reply within one business day. All enquiries are confidential.</p>
+  </div>
+  <div class="contact-body">
+    <div class="contact-grid">
+      <div>
+        <h2 style="font-family:var(--serif);font-size:26px;color:var(--ink);margin-bottom:20px">Send an enquiry</h2>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div><label class="form-label">Your name</label><input class="form-input" type="text" placeholder="Jane Smith"></div>
+          <div><label class="form-label">Email</label><input class="form-input" type="email" placeholder="jane@example.com"></div>
+          <div><label class="form-label">Project type</label>
+            <select class="form-input"><option>Aboriginal heritage mapping & report</option><option>Tree survey & mapping</option><option>Small area clearing assessment</option><option>Paddock tree mapping & assessment</option><option>Combined heritage & clearing</option><option>QGIS spatial analysis</option><option>On-ground clearing (with partner)</option><option>Other / not sure</option></select>
+          </div>
+          <div><label class="form-label">Tell me about your project</label><textarea class="form-input" rows="5" style="resize:vertical" placeholder="Site location (general), approximate area, timeline..."></textarea></div>
+          <button class="btn-p" style="align-self:flex-start">Send enquiry</button>
+        </div>
+      </div>
+      <div>
+        <h2 style="font-family:var(--serif);font-size:26px;color:var(--ink);margin-bottom:20px">What to expect</h2>
+        <div class="info-card" style="border-left:3px solid var(--sage2)"><div class="info-card-tag" style="color:var(--sage)">Confidentiality</div><p>All client information, project details, and site locations are kept strictly confidential. I never disclose client names or specifics.</p></div>
+        <div class="info-card" style="border-left:3px solid var(--amber)"><div class="info-card-tag" style="color:var(--amber)">Location</div><p>Based in NSW. Primary work area across NSW with capacity for VIC and ACT projects. Field and remote desktop work available.</p></div>
+        <div class="info-card" style="border-left:3px solid var(--sage2)"><div class="info-card-tag" style="color:var(--sage)">Response time</div><p>I respond to all enquiries within one business day. Mention urgent timelines in your message and I'll prioritise accordingly.</p></div>
+        <div class="info-card" style="border-left:3px solid var(--sage2)"><div class="info-card-tag" style="color:var(--sage)">Pricing</div><p>All projects quoted with a fixed fee after an initial conversation. No hourly surprises — you know the cost before work begins.</p></div>
+      </div>
+    </div>
+  </div>
+  <footer><div class="foot-copy">© 2026 Patrick Nankivell · QGIS Mapping · NSW</div><div class="foot-links"><a onclick="showPage('home')">Home</a><a onclick="showPage('services')">Services</a></div></footer>
+</div>
+
+<script>
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  var el=document.getElementById('nav-'+id);
+  if(el)el.classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
